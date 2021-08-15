@@ -2,12 +2,12 @@ mod commands;
 
 use commands::{
     general::{about::*},
-    admin::{say::*},
+    admin::{say::*, togglegif::*},
 };
 
 use dotenv::dotenv;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashSet},
     env,
     sync::Arc,
 };
@@ -47,10 +47,10 @@ impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
 }
 
-struct CommandCounter;
+struct GifOnlyToggle;
 
-impl TypeMapKey for CommandCounter {
-    type Value = HashMap<String, u64>;
+impl TypeMapKey for GifOnlyToggle {
+    type Value = bool;
 }
 
 struct Handler;
@@ -58,7 +58,7 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+        println!("{} shard {} is connected!", ready.user.name, ctx.shard_id + 1);
 
         ctx.shard.set_presence(Some(Activity::playing(&format!("with Rust | Shard {}/{}", ctx.shard_id + 1, 2))), OnlineStatus::Idle);
     }
@@ -69,7 +69,7 @@ impl EventHandler for Handler {
 struct General;
 
 #[group]
-#[commands(say)]
+#[commands(say, togglegif)]
 #[owners_only]
 struct Admin;
 
@@ -115,6 +115,8 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 #[hook]
 async fn normal_message(ctx: &Context, msg: &Message) {
     println!("Message is not a command: {}", msg.content);
+
+    if !ctx.data.read().await.get::<GifOnlyToggle>().unwrap() { return; }
 
     if msg.guild_id == Some(GuildId::from(253766906824228866)) && msg.channel_id == 844318561052393502 {
         println!("Message sent in gif channel");
@@ -203,6 +205,7 @@ async fn main() {
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
+        data.insert::<GifOnlyToggle>(true);
     }
 
     if let Err(why) = client.start_shards(2).await {
