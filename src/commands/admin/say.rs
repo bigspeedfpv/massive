@@ -3,7 +3,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
-#[description("Joins a voice channel in the current guild with a given ID")]
+#[description("Repeats the input it is given.")]
 async fn say(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
   let _ = msg.channel_id.send_message(ctx, |f| f.content(args.rest())).await;
 
