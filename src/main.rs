@@ -38,7 +38,7 @@ use serenity::{
     prelude::*,
 };
 use tokio::sync::Mutex;
-use tokio::time::{delay_for, Duration};
+use tokio::time::{sleep, Duration};
 
 // allow data access between shards
 struct ShardManagerContainer;
@@ -125,12 +125,12 @@ async fn normal_message(ctx: &Context, msg: &Message) {
 
             let sent = msg.channel_id.send_message(ctx, |f| f.content("Please keep use of this channel to gifs only. For random conversation, check out <#694125599454658560>!")).await;
 
-            if sent.is_ok() {
-                tokio::spawn(async move {
-                    delay_for(time::Duration::from_secs(3)).await;
-                    println!("Finished after: {} seconds", now.elapsed().as_secs_f64());
-                    stream.write(format!("Hello There").as_str().as_bytes()).await.unwrap();
-                });
+            match sent {
+                Ok(m) => {
+                    sleep(Duration::from_secs(5)).await;
+                    let _ = m.delete(ctx).await;
+                },
+                Err(why) => { println!("Failed to delete sent message: {}", why); },
             }
         }
     }
@@ -181,7 +181,7 @@ async fn main() {
         .configure(|c| c
             .with_whitespace(true)
             .on_mention(Some(bot_id))
-            .prefix("u.")
+            .prefix("mass ")
             .delimiters(vec![" "])
             .owners(owners))
         .before(before)
