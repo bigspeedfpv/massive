@@ -48,7 +48,7 @@ async fn about(ctx: &Context, msg: &Message) -> CommandResult {
         .embed(|e| e
             .colour(0xFF305A)
             .title("About")
-            .description("Massive a simple bot made by bigspeed to perform miscellaneous tasks.")
+            .description("Massive is a simple utilities bot made by bigspeed.")
             .field("🪞 Shard", format!("{}/2", ctx.shard_id), true)
             .field("⏱️ Ping", ping, true)
             .field("❤️ Heartbeat", &format!("{}", latency), true)
