@@ -58,9 +58,9 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} shard {} is connected!", ready.user.name, ready.shard.unwrap()[0]);
+        println!("{} shard {} is connected!", ready.user.name, ready.shard.unwrap()[0] + 1);
 
-        ctx.shard.set_presence(Some(Activity::playing(&format!("with Rust | Shard {}/{}", ready.shard.unwrap()[0], ready.shard.unwrap()[1]))), OnlineStatus::Idle);
+        ctx.shard.set_presence(Some(Activity::playing(&format!("with Rust | Shard {}/{}", ready.shard.unwrap()[0] + 1, ready.shard.unwrap()[1]))), OnlineStatus::Idle);
     }
 }
 
