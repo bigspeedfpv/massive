@@ -3,6 +3,7 @@ mod commands;
 use commands::{
     general::{about::*},
     admin::{say::*, togglegif::*},
+    moderation::{kick::*},
 };
 
 use dotenv::dotenv;
@@ -73,20 +74,30 @@ impl EventHandler for Handler {
 
 #[group]
 #[commands(about)]
+#[summary("General-purpose commands")]
 struct General;
+
+#[group]
+#[commands(kick)]
+#[owner_privilege(false)]
+#[summary("Moderation utilities")]
+struct Moderation;
 
 #[group]
 #[commands(say, togglegif)]
 #[owners_only]
+#[summary("Commands related to the core functionality of MASSIVE")]
 struct Admin;
 
 #[help]
-#[individual_command_tip = "Hello! If you'd like to learn more about a specific command, just pass the name as an argument (e.g. `u.help status`)."]
-#[command_not_found_text = "Sorry, I couldn't find the command {}."]
+#[individual_command_tip("Hello! If you'd like to learn more about a specific command, just pass the name as an argument (e.g. `u.help status`).")]
+#[command_not_found_text("Sorry, I couldn't find the command {}.")]
 #[max_levenshtein_distance(3)]
-#[lacking_permissions = "Hide"]
-#[lacking_role = "Hide"]
-#[wrong_channel = "Hide"]
+#[lacking_permissions("strike")]
+#[lacking_role("strike")]
+#[wrong_channel("strike")]
+#[lacking_ownership("hide")]
+#[embed_success_colour("#42f56f")]
 async fn custom_help(
     ctx: &Context,
     msg: &Message,
@@ -191,6 +202,7 @@ async fn main() {
             .with_whitespace(true)
             .on_mention(Some(bot_id))
             .prefix("mass ")
+            .no_dm_prefix(true)
             .delimiters(vec![" "])
             .owners(owners))
         .before(before)
@@ -201,6 +213,7 @@ async fn main() {
         .bucket("normal", |b| b.delay(5)).await
         .help(&CUSTOM_HELP)
         .group(&GENERAL_GROUP)
+        .group(&MODERATION_GROUP)
         .group(&ADMIN_GROUP);
 
     let mut client = Client::builder(&token)
