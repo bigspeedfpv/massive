@@ -3,7 +3,6 @@ mod commands;
 use commands::{
     general::{about::*},
     admin::{say::*, togglegif::*},
-    multigp::{gq::*},
 };
 
 use dotenv::dotenv;
@@ -80,10 +79,6 @@ struct General;
 #[commands(say, togglegif)]
 #[owners_only]
 struct Admin;
-
-#[group]
-#[commands(gq)]
-struct MultiGP;
 
 #[help]
 #[individual_command_tip = "Hello! If you'd like to learn more about a specific command, just pass the name as an argument (e.g. `u.help status`)."]
@@ -206,8 +201,7 @@ async fn main() {
         .bucket("normal", |b| b.delay(5)).await
         .help(&CUSTOM_HELP)
         .group(&GENERAL_GROUP)
-        .group(&ADMIN_GROUP)
-        .group(&MULTIGP_GROUP);
+        .group(&ADMIN_GROUP);
 
     let mut client = Client::builder(&token)
         .event_handler(Handler)
