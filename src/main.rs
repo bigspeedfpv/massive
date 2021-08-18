@@ -3,6 +3,7 @@ mod commands;
 use commands::{
     general::{about::*},
     admin::{say::*, togglegif::*},
+    multigp::{gq::*},
 };
 
 use dotenv::dotenv;
@@ -39,6 +40,7 @@ use serenity::{
 };
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
+use reqwest;
 
 // allow data access between shards
 struct ShardManagerContainer;
@@ -51,6 +53,12 @@ struct GifOnlyToggle;
 
 impl TypeMapKey for GifOnlyToggle {
     type Value = bool;
+}
+
+struct ReqwestContainer;
+
+impl TypeMapKey for ReqwestContainer {
+    type Value = reqwest::Client;
 }
 
 struct Handler;
@@ -72,6 +80,10 @@ struct General;
 #[commands(say, togglegif)]
 #[owners_only]
 struct Admin;
+
+#[group]
+#[commands(gq)]
+struct MultiGP;
 
 #[help]
 #[individual_command_tip = "Hello! If you'd like to learn more about a specific command, just pass the name as an argument (e.g. `u.help status`)."]
@@ -194,7 +206,8 @@ async fn main() {
         .bucket("normal", |b| b.delay(5)).await
         .help(&CUSTOM_HELP)
         .group(&GENERAL_GROUP)
-        .group(&ADMIN_GROUP);
+        .group(&ADMIN_GROUP)
+        .group(&MULTIGP_GROUP);
 
     let mut client = Client::builder(&token)
         .event_handler(Handler)
@@ -202,10 +215,13 @@ async fn main() {
         .await
         .expect("Err creating client");
 
+    let rq_client = reqwest::Client::new();
+
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
         data.insert::<GifOnlyToggle>(true);
+        data.insert::<ReqwestContainer>(rq_client);
     }
 
     if let Err(why) = client.start_shards(2).await {
