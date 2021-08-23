@@ -3,7 +3,7 @@ mod commands;
 use commands::{
     general::{about::*},
     admin::{say::*, togglegif::*},
-    moderation::{kick::*},
+    moderation::{ban::*, unban::*, kick::*},
 };
 
 use dotenv::dotenv;
@@ -78,7 +78,7 @@ impl EventHandler for Handler {
 struct General;
 
 #[group]
-#[commands(kick)]
+#[commands(ban, unban, kick)]
 #[owner_privilege(false)]
 #[summary("Moderation utilities")]
 struct Moderation;
