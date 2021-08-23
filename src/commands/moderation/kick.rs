@@ -3,11 +3,9 @@ use serenity::framework::standard::{macros::command, CommandResult, Args};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-use crate::commands::moderation::kick;
-
 #[command]
 #[description("Kicks a user from the current server.")]
-#[usage("<mention | username#tag | id> [reason]")]
+#[usage("<mention | id> [reason]")]
 #[required_permissions(MANAGE_MESSAGES)]
 async fn kick(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
   let id: UserId;
@@ -41,10 +39,6 @@ async fn kick(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
 
   // prefer sending vanity url
   let vanity_url = msg.guild_id.unwrap().vanity_url(ctx).await.unwrap_or(invite_link);
-
-  
-
-  println!("{}", id);
 
   if let Some(current_guild) = msg.guild(ctx).await {
     if let Ok(user) = id.to_user(ctx).await {
