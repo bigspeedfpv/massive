@@ -1,33 +1,36 @@
 mod commands;
 use commands::{
-    general::{about::*, user::*},
     admin::{say::*, togglegif::*},
-    moderation::{ban::*, unban::*, kick::*},
+    general::{about::*, user::*},
+    moderation::{ban::*, kick::*, unban::*},
 };
 
 use dotenv::dotenv;
-use std::{
-    collections::{HashSet},
-    env,
-    sync::Arc,
-};
-use serenity::{async_trait, cache::FromStrAndCache, client::bridge::gateway::{ShardManager}, framework::standard::{
+use serenity::{
+    async_trait,
+    cache::FromStrAndCache,
+    client::bridge::gateway::ShardManager,
+    framework::standard::{
         help_commands,
         macros::{group, help, hook},
-        Args,
-        CommandGroup,
-        CommandResult,
-        DispatchError,
-        HelpOptions,
-        StandardFramework,
-    }, http::Http, model::{channel::{Message, ReactionType}, gateway::Ready, id::{
-            UserId,
-            GuildId,
-        }, misc::EmojiIdentifier, prelude::Activity, user::OnlineStatus}, prelude::*};
+        Args, CommandGroup, CommandResult, DispatchError, HelpOptions, StandardFramework,
+    },
+    http::Http,
+    model::{
+        channel::{Message, ReactionType},
+        gateway::Ready,
+        id::{GuildId, UserId},
+        misc::EmojiIdentifier,
+        prelude::Activity,
+        user::OnlineStatus,
+    },
+    prelude::*,
+};
+use std::{collections::HashSet, env, sync::Arc};
 
+use reqwest;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
-use reqwest;
 
 use chrono::Utc;
 
@@ -57,9 +60,20 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} shard {} is connected!", ready.user.name, ready.shard.unwrap()[0] + 1);
+        println!(
+            "{} shard {} is connected!",
+            ready.user.name,
+            ready.shard.unwrap()[0] + 1
+        );
 
-        ctx.shard.set_presence(Some(Activity::playing(&format!("with Rust | Shard {}/{}", ready.shard.unwrap()[0] + 1, ready.shard.unwrap()[1]))), OnlineStatus::Idle);
+        ctx.shard.set_presence(
+            Some(Activity::playing(&format!(
+                "with Rust | Shard {}/{}",
+                ready.shard.unwrap()[0] + 1,
+                ready.shard.unwrap()[1]
+            ))),
+            OnlineStatus::Idle,
+        );
     }
 }
 
@@ -98,13 +112,16 @@ async fn custom_help(
     owners: HashSet<UserId>,
 ) -> CommandResult {
     let _ = help_commands::with_embeds(ctx, msg, args, help_options, groups, owners).await;
-    
+
     Ok(())
 }
 
 #[hook]
 async fn before(_ctx: &Context, msg: &Message, command_name: &str) -> bool {
-    println!("Received command \"{}\" from user \"{}\"", command_name, msg.author.name);
+    println!(
+        "Received command \"{}\" from user \"{}\"",
+        command_name, msg.author.name
+    );
     true
 }
 
@@ -112,12 +129,36 @@ async fn before(_ctx: &Context, msg: &Message, command_name: &str) -> bool {
 async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
     match command_result {
         Ok(()) => {
-            println!("Processed command \"{}\" from user \"{}\" successfully", command_name, msg.author.name);
-            let _ = msg.react(ctx, ReactionType::from(EmojiIdentifier::from_str(ctx, "<a:done:876387797030821899>").await.unwrap())).await;
-        },
+            println!(
+                "Processed command \"{}\" from user \"{}\" successfully",
+                command_name, msg.author.name
+            );
+            let _ = msg
+                .react(
+                    ctx,
+                    ReactionType::from(
+                        EmojiIdentifier::from_str(ctx, "<a:done:876387797030821899>")
+                            .await
+                            .unwrap(),
+                    ),
+                )
+                .await;
+        }
         Err(why) => {
-            println!("Command \"{}\" from user \"{}\" failed: {:?}", command_name, msg.author.name, why);
-            let _ = msg.react(ctx, ReactionType::from(EmojiIdentifier::from_str(ctx, "<a:excl:877661330411229225>").await.unwrap())).await;
+            println!(
+                "Command \"{}\" from user \"{}\" failed: {:?}",
+                command_name, msg.author.name, why
+            );
+            let _ = msg
+                .react(
+                    ctx,
+                    ReactionType::from(
+                        EmojiIdentifier::from_str(ctx, "<a:excl:877661330411229225>")
+                            .await
+                            .unwrap(),
+                    ),
+                )
+                .await;
             let _ = msg.channel_id.send_message(ctx, |m| m
                 .embed(|e| e
                     .title(&format!("Command `{}` failed", command_name))
@@ -129,7 +170,7 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
                     .timestamp(format!("{}", Utc::now().format("%+")))
                 )
             ).await;
-        },
+        }
     }
 }
 
@@ -142,12 +183,20 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 async fn normal_message(ctx: &Context, msg: &Message) {
     println!("Message is not a command: {}", msg.content);
 
-    if !ctx.data.read().await.get::<GifOnlyToggle>().unwrap() { return; }
+    if !ctx.data.read().await.get::<GifOnlyToggle>().unwrap() {
+        return;
+    }
 
-    if msg.guild_id == Some(GuildId::from(253766906824228866)) && msg.channel_id == 844318561052393502 {
+    if msg.guild_id == Some(GuildId::from(253766906824228866))
+        && msg.channel_id == 844318561052393502
+    {
         println!("Message sent in gif channel");
 
-        if !msg.content.starts_with("https://tenor.com/") && !msg.content.starts_with("https://c.tenor.com") && !msg.content.ends_with(".gif") && msg.content != "" {
+        if !msg.content.starts_with("https://tenor.com/")
+            && !msg.content.starts_with("https://c.tenor.com")
+            && !msg.content.ends_with(".gif")
+            && msg.content != ""
+        {
             println!("Message is not a gif, deleting.");
             let _ = msg.delete(ctx).await;
 
@@ -157,8 +206,10 @@ async fn normal_message(ctx: &Context, msg: &Message) {
                 Ok(m) => {
                     sleep(Duration::from_secs(5)).await;
                     let _ = m.delete(ctx).await;
-                },
-                Err(why) => { println!("Failed to delete sent message: {}", why); },
+                }
+                Err(why) => {
+                    println!("Failed to delete sent message: {}", why);
+                }
             }
         }
     }
@@ -175,7 +226,10 @@ async fn dispatch_error(ctx: &Context, msg: &Message, error: DispatchError) {
         if info.is_first_try {
             let _ = msg
                 .channel_id
-                .say(&ctx.http, &format!("Try this again in {} seconds.", info.as_secs()))
+                .say(
+                    &ctx.http,
+                    &format!("Try this again in {} seconds.", info.as_secs()),
+                )
                 .await;
         }
     }
@@ -201,23 +255,25 @@ async fn main() {
                 Ok(bot_id) => (owners, bot_id.id),
                 Err(why) => panic!("Could not access the bot id: {:?}", why),
             }
-        },
+        }
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
     let framework = StandardFramework::new()
-        .configure(|c| c
-            .with_whitespace(true)
-            .on_mention(Some(bot_id))
-            .prefix(PREFIX)
-            .no_dm_prefix(true)
-            .owners(owners))
+        .configure(|c| {
+            c.with_whitespace(true)
+                .on_mention(Some(bot_id))
+                .prefix(PREFIX)
+                .no_dm_prefix(true)
+                .owners(owners)
+        })
         .before(before)
         .after(after)
         .unrecognised_command(unknown_command)
         .normal_message(normal_message)
         .on_dispatch_error(dispatch_error)
-        .bucket("normal", |b| b.delay(5)).await
+        .bucket("normal", |b| b.delay(5))
+        .await
         .help(&CUSTOM_HELP)
         .group(&GENERAL_GROUP)
         .group(&MODERATION_GROUP)
