@@ -46,7 +46,7 @@ async fn about(ctx: &Context, msg: &Message) -> CommandResult {
 
     let a = msg.channel_id.send_message(ctx, |m| m
         .embed(|e| e
-            .colour(0xFF305A)
+            .colour(0xB330FF)
             .title("About")
             .description("Massive is a simple utilities bot made by bigspeed.")
             .field("🪞 Shard", format!("{}/2", ctx.shard_id), true)
