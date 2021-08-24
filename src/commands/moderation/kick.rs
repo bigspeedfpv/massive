@@ -10,6 +10,10 @@ use serenity::prelude::*;
 async fn kick(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
   let id: UserId;
 
+  if args.len() == 0 {
+    return Err(From::from("Please mention or enter the ID of the user you would like to kick (e.g. `kick 277822562116042753`)."));
+  }
+
   if msg.mentions.len() != 0 {
     id = msg.mentions[0].id;
     args.advance();
@@ -19,8 +23,7 @@ async fn kick(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     if let Ok(user_id) = user?.parse::<u64>() {
       id = user_id.into();
     } else {
-      let _ = msg.reply(ctx, "Please mention or enter the ID of the user you would like to kick (e.g. `kick 277822562116042753`).").await;
-      return Ok(());
+      return Err(From::from("That doesn't look like an ID or a mention! If it's an ID, are you sure you copied it correctly?"));
     }
   }
 
