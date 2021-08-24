@@ -22,7 +22,6 @@ async fn togglegif(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let _ = msg.react(ctx, ReactionType::from(EmojiIdentifier::from_str(ctx, reaction).await.unwrap())).await;
-    let _ = msg.react(ctx, ReactionType::from(EmojiIdentifier::from_str(ctx, "<a:done:876387797030821899>").await.unwrap())).await;
     
     sleep(Duration::from_secs(5)).await;
 

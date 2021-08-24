@@ -1,7 +1,6 @@
 mod commands;
-
 use commands::{
-    general::{about::*},
+    general::{about::*, user::*},
     admin::{say::*, togglegif::*},
     moderation::{ban::*, unban::*, kick::*},
 };
@@ -12,10 +11,7 @@ use std::{
     env,
     sync::Arc,
 };
-use serenity::{
-    async_trait,
-    client::bridge::gateway::{ShardManager},
-    framework::standard::{
+use serenity::{async_trait, cache::FromStrAndCache, client::bridge::gateway::{ShardManager}, framework::standard::{
         help_commands,
         macros::{group, help, hook},
         Args,
@@ -24,23 +20,18 @@ use serenity::{
         DispatchError,
         HelpOptions,
         StandardFramework,
-    },
-    http::Http,
-    model::{
-        channel::{Message},
-        gateway::Ready,
-        id::{
+    }, http::Http, model::{channel::{Message, ReactionType}, gateway::Ready, id::{
             UserId,
             GuildId,
-        },
-        prelude::Activity,
-        user::OnlineStatus,
-    },
-    prelude::*,
-};
+        }, misc::EmojiIdentifier, prelude::Activity, user::OnlineStatus}, prelude::*};
+
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
 use reqwest;
+
+use chrono::Utc;
+
+const PREFIX: &'static str = "m.";
 
 // allow data access between shards
 struct ShardManagerContainer;
@@ -73,7 +64,7 @@ impl EventHandler for Handler {
 }
 
 #[group]
-#[commands(about)]
+#[commands(about, user)]
 #[summary("General-purpose commands")]
 struct General;
 
@@ -118,10 +109,27 @@ async fn before(_ctx: &Context, msg: &Message, command_name: &str) -> bool {
 }
 
 #[hook]
-async fn after(_ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
+async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
     match command_result {
-        Ok(()) => println!("Processed command \"{}\" from user \"{}\" successfully", command_name, msg.author.name),
-        Err(why) => println!("Command \"{}\" from user \"{}\" failed: {:?}", command_name, msg.author.name, why),
+        Ok(()) => {
+            println!("Processed command \"{}\" from user \"{}\" successfully", command_name, msg.author.name);
+            let _ = msg.react(ctx, ReactionType::from(EmojiIdentifier::from_str(ctx, "<a:done:876387797030821899>").await.unwrap())).await;
+        },
+        Err(why) => {
+            println!("Command \"{}\" from user \"{}\" failed: {:?}", command_name, msg.author.name, why);
+            let _ = msg.react(ctx, ReactionType::from(EmojiIdentifier::from_str(ctx, "<a:excl:877661330411229225>").await.unwrap())).await;
+            let _ = msg.channel_id.send_message(ctx, |m| m
+                .embed(|e| e
+                    .title(&format!("Command `{}` failed", command_name))
+                    .colour(0xFF3045)
+                    .description(&format!("{}\n\n**Please refer to the help for this command for more info** (`{}help {}`).", why, PREFIX, command_name))
+                    .footer(|f| f
+                        .text("If you believe this is an error, please contact bigspeed.")
+                    )
+                    .timestamp(format!("{}", Utc::now().format("%+")))
+                )
+            ).await;
+        },
     }
 }
 
@@ -201,9 +209,8 @@ async fn main() {
         .configure(|c| c
             .with_whitespace(true)
             .on_mention(Some(bot_id))
-            .prefix("mass ")
+            .prefix(PREFIX)
             .no_dm_prefix(true)
-            .delimiters(vec![" "])
             .owners(owners))
         .before(before)
         .after(after)
