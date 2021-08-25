@@ -5,6 +5,9 @@ use commands::{
     moderation::{ban::*, kick::*, unban::*},
 };
 
+mod util;
+use util::log;
+
 use dotenv::dotenv;
 use serenity::{
     async_trait,
@@ -60,11 +63,11 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!(
+        log::connected(&format!(
             "{} shard {} is connected!",
             ready.user.name,
             ready.shard.unwrap()[0] + 1
-        );
+        ));
 
         ctx.shard.set_presence(
             Some(Activity::playing(&format!(
@@ -118,10 +121,11 @@ async fn custom_help(
 
 #[hook]
 async fn before(_ctx: &Context, msg: &Message, command_name: &str) -> bool {
-    println!(
+    log::received(&format!(
         "Received command \"{}\" from user \"{}\"",
         command_name, msg.author.name
-    );
+    ));
+
     true
 }
 
@@ -129,10 +133,10 @@ async fn before(_ctx: &Context, msg: &Message, command_name: &str) -> bool {
 async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
     match command_result {
         Ok(()) => {
-            println!(
+            log::success(&format!(
                 "Processed command \"{}\" from user \"{}\" successfully",
                 command_name, msg.author.name
-            );
+            ));
             let _ = msg
                 .react(
                     ctx,
@@ -145,10 +149,10 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
                 .await;
         }
         Err(why) => {
-            println!(
+            log::error(&format!(
                 "Command \"{}\" from user \"{}\" failed: {:?}",
                 command_name, msg.author.name, why
-            );
+            ));
             let _ = msg
                 .react(
                     ctx,
@@ -161,7 +165,7 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
                 .await;
             let _ = msg.channel_id.send_message(ctx, |m| m
                 .embed(|e| e
-                    .title(&format!("Command `{}` failed", command_name))
+                    .title(&format!("Command `{}` failed.", command_name))
                     .colour(0xFF3045)
                     .description(&format!("{}\n\n**Please refer to the help for this command for more info** (`{}help {}`).", why, PREFIX, command_name))
                     .footer(|f| f
@@ -175,13 +179,35 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
 }
 
 #[hook]
-async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &str) {
-    println!("Could not find command named \"{}\"", unknown_command_name);
+async fn unknown_command(ctx: &Context, msg: &Message, unknown_command_name: &str) {
+    let _ = msg
+        .channel_id
+        .send_message(ctx, |m| {
+            m.embed(|e| {
+                e.title(&format!(
+                    "Unable to find command `{}`.",
+                    unknown_command_name
+                ))
+                .colour(0xFF3045)
+                .description(&format!(
+                    "**Please refer to the help for more info** (`{}help`).",
+                    PREFIX
+                ))
+                .footer(|f| f.text("If you believe this is an error, please contact bigspeed."))
+                .timestamp(format!("{}", Utc::now().format("%+")))
+            })
+        })
+        .await;
+
+    log::error(&format!(
+        "Could not find command named \"{}\"",
+        unknown_command_name
+    ));
 }
 
 #[hook]
 async fn normal_message(ctx: &Context, msg: &Message) {
-    println!("Message is not a command: {}", msg.content);
+    log::info(&format!("Message is not a command: {}", msg.content));
 
     if !ctx.data.read().await.get::<GifOnlyToggle>().unwrap() {
         return;
@@ -190,14 +216,14 @@ async fn normal_message(ctx: &Context, msg: &Message) {
     if msg.guild_id == Some(GuildId::from(253766906824228866))
         && msg.channel_id == 844318561052393502
     {
-        println!("Message sent in gif channel");
+        log::info(&format!("Message sent in gif channel"));
 
         if !msg.content.starts_with("https://tenor.com/")
             && !msg.content.starts_with("https://c.tenor.com")
             && !msg.content.ends_with(".gif")
             && msg.content != ""
         {
-            println!("Message is not a gif, deleting.");
+            log::info(&format!("Message is not a gif, deleting."));
             let _ = msg.delete(ctx).await;
 
             let sent = msg.channel_id.send_message(ctx, |f| f.content("Please keep use of this channel to gifs only. For random conversation, check out <#694125599454658560>!")).await;
@@ -208,7 +234,7 @@ async fn normal_message(ctx: &Context, msg: &Message) {
                     let _ = m.delete(ctx).await;
                 }
                 Err(why) => {
-                    println!("Failed to delete sent message: {}", why);
+                    log::error(&format!("Failed to delete sent message: {}", why));
                 }
             }
         }
@@ -295,6 +321,6 @@ async fn main() {
     }
 
     if let Err(why) = client.start_shards(2).await {
-        println!("Client error: {:?}", why);
+        log::error(&format!("Client error: {:?}", why));
     }
 }

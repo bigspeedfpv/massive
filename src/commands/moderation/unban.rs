@@ -3,6 +3,8 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use crate::util::log;
+
 #[command]
 #[description("Unbans a user from the current server.")]
 #[usage("<mention | id> [reason]")]
@@ -87,18 +89,24 @@ async fn unban(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
                     }
                     Err(why) => {
                         let _ = msg.reply(ctx, "<a:done:876387797030821899> Successfully unbanned user, but was unable to DM them. It's possible that they disabled direct messages.").await;
-                        println!("Failed to dm user: {}", why);
+                        log::error(&format!("Failed to dm user: {}", why));
                     }
                 }
             } else {
                 let _ = msg.reply(ctx, "<a:excl:877661330411229225> Failed to unban user. Do I have the correct permissions?").await;
-                println!("Failed to ban user: {:?}", unban_result);
+                log::error(&format!("Failed to ban user: {:?}", unban_result));
             }
         } else {
-            println!("Couldn't get user info! {:?}", id.to_user(ctx).await);
+            log::error(&format!(
+                "Couldn't get user info! {:?}",
+                id.to_user(ctx).await
+            ));
         }
     } else {
-        println!("Couldn't get guild info! {:?}", msg.guild(ctx).await);
+        log::error(&format!(
+            "Couldn't get guild info! {:?}",
+            msg.guild(ctx).await
+        ));
     }
 
     Ok(())

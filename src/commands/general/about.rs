@@ -65,9 +65,7 @@ async fn about(ctx: &Context, msg: &Message) -> CommandResult {
         .await;
 
     match a {
-        Err(why) => println!("{}", why),
-        _ => (),
+        Err(why) => Err(From::from(why)),
+        _ => Ok(()),
     }
-
-    Ok(())
 }
