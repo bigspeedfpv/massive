@@ -4,7 +4,7 @@ pub fn info(msg: &str) {
     println!(
         "{}{}{:>9} {}{}",
         Style::Bold,
-        Fg::LightPurple,
+        Fg::Yellow,
         "Info",
         Reset,
         msg
