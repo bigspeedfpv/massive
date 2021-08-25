@@ -2,6 +2,8 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use chrono::Utc;
+
 #[command]
 #[description("Shows info about a user, such as their profile picture and the date their account was created.")]
 #[usage("<id | mention>")]
@@ -85,6 +87,9 @@ async fn user(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
                     if roles != String::from("") {
                         e.field("Roles", roles, false);
                     }
+
+                    e.footer(|f| f.text(&format!("Requested by {}", msg.author.name)))
+                        .timestamp(format!("{}", Utc::now().format("%+")));
 
                     e
                 })
