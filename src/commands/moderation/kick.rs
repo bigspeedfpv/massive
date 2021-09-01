@@ -8,7 +8,7 @@ use crate::util::log;
 #[command]
 #[description("Kicks a user from the current server.")]
 #[usage("<mention | id> [reason]")]
-#[required_permissions(MANAGE_MESSAGES)]
+#[required_permissions(KICK_MEMBERS)]
 async fn kick(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let id: UserId;
 

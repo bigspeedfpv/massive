@@ -9,7 +9,7 @@ use crate::util::log;
 #[description("Bans a user from the current server.")]
 #[usage("<mention | id> [reason]")]
 #[aliases("pardon")]
-#[required_permissions(MANAGE_MESSAGES)]
+#[required_permissions(BAN_MEMBERS)]
 async fn ban(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let id: UserId;
 

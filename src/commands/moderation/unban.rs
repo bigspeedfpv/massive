@@ -8,7 +8,7 @@ use crate::util::log;
 #[command]
 #[description("Unbans a user from the current server.")]
 #[usage("<mention | id> [reason]")]
-#[required_permissions(MANAGE_MESSAGES)]
+#[required_permissions(BAN_MEMBERS)]
 async fn unban(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let id: UserId;
 

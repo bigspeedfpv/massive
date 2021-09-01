@@ -2,7 +2,7 @@ mod commands;
 use commands::{
     admin::{say::*, togglegif::*},
     general::{about::*, user::*},
-    moderation::{ban::*, kick::*, unban::*},
+    moderation::{ban::*, kick::*, settings::*, unban::*},
 };
 
 mod util;
@@ -36,8 +36,6 @@ use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
 
 use chrono::Utc;
-
-const PREFIX: &'static str = "m.";
 
 // allow data access between shards
 struct ShardManagerContainer;
@@ -86,7 +84,7 @@ impl EventHandler for Handler {
 struct General;
 
 #[group]
-#[commands(ban, unban, kick)]
+#[commands(ban, kick, settings, unban)]
 #[owner_privilege(false)]
 #[summary("Moderation utilities")]
 struct Moderation;
@@ -98,7 +96,7 @@ struct Moderation;
 struct Admin;
 
 #[help]
-#[individual_command_tip("Hello! If you'd like to learn more about a specific command, just pass the name as an argument (e.g. `u.help status`).")]
+#[individual_command_tip("Hello! If you'd like to learn more about a specific command, just pass the name as an argument (e.g. `help status`).")]
 #[command_not_found_text("Sorry, I couldn't find the command {}.")]
 #[max_levenshtein_distance(3)]
 #[lacking_permissions("strike")]
@@ -137,37 +135,48 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
                 "Processed command \"{}\" from user \"{}\" successfully",
                 command_name, msg.author.name
             ));
-            let _ = msg
-                .react(
-                    ctx,
-                    ReactionType::from(
-                        EmojiIdentifier::from_str(ctx, "<a:done:876387797030821899>")
-                            .await
-                            .unwrap(),
-                    ),
-                )
-                .await;
+
+            let server = massive::get_server(msg.guild_id.unwrap_or(0.into()).into());
+
+            if server.react {
+                let _ = msg
+                    .react(
+                        ctx,
+                        ReactionType::from(
+                            EmojiIdentifier::from_str(ctx, "<a:done:876387797030821899>")
+                                .await
+                                .unwrap(),
+                        ),
+                    )
+                    .await;
+            }
         }
         Err(why) => {
             log::error(&format!(
                 "Command \"{}\" from user \"{}\" failed: {:?}",
                 command_name, msg.author.name, why
             ));
-            let _ = msg
-                .react(
-                    ctx,
-                    ReactionType::from(
-                        EmojiIdentifier::from_str(ctx, "<a:excl:877661330411229225>")
-                            .await
-                            .unwrap(),
-                    ),
-                )
-                .await;
+
+            let server = massive::get_server(msg.guild_id.unwrap_or(0.into()).into());
+
+            if server.react {
+                let _ = msg
+                    .react(
+                        ctx,
+                        ReactionType::from(
+                            EmojiIdentifier::from_str(ctx, "<a:excl:877661330411229225>")
+                                .await
+                                .unwrap(),
+                        ),
+                    )
+                    .await;
+            }
+
             let _ = msg.channel_id.send_message(ctx, |m| m
                 .embed(|e| e
                     .title(&format!("Command `{}` failed.", command_name))
                     .colour(0xFF3045)
-                    .description(&format!("{}\n\n**Please refer to the help for this command for more info** (`{}help {}`).", why, PREFIX, command_name))
+                    .description(&format!("{}\n\n**Please refer to the help for this command for more info** (`{}help {}`).", why, massive::DEFAULT_PREFIX, command_name))
                     .footer(|f| f
                         .text("If you believe this is an error, please contact bigspeed.")
                     )
@@ -191,7 +200,7 @@ async fn unknown_command(ctx: &Context, msg: &Message, unknown_command_name: &st
                 .colour(0xFF3045)
                 .description(&format!(
                     "**Please refer to the help for more info** (`{}help`).",
-                    PREFIX
+                    massive::get_server(msg.guild_id.unwrap_or(0.into()).into()).prefix
                 ))
                 .footer(|f| f.text("If you believe this is an error, please contact bigspeed."))
                 .timestamp(format!("{}", Utc::now().format("%+")))
@@ -289,7 +298,15 @@ async fn main() {
         .configure(|c| {
             c.with_whitespace(true)
                 .on_mention(Some(bot_id))
-                .prefix(PREFIX)
+                .dynamic_prefix(|_, msg| Box::pin(async move {
+                    if let Some(guild_id) = msg.guild_id {
+                        Some(
+                            massive::get_server(guild_id.into()).prefix
+                        )
+                    } else {
+                        Some(massive::DEFAULT_PREFIX.to_string())
+                    }
+                }))
                 .no_dm_prefix(true)
                 .owners(owners)
         })
