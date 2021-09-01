@@ -8,7 +8,7 @@ pub mod models;
 mod util;
 use util::log;
 
-pub const DEFAULT_PREFIX: &'static str = "d.";
+pub const DEFAULT_PREFIX: &'static str = "m.";
 
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
