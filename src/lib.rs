@@ -39,7 +39,7 @@ pub fn get_server(server_id: i64) -> Server {
     }
 
     let connection = establish_connection();
-    let server = servers.find(id)
+    let server = servers.find(server_id)
         .first::<Server>(&connection);
 
     if let Ok(server) = server {
