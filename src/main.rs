@@ -298,14 +298,11 @@ async fn main() {
         .configure(|c| {
             c.with_whitespace(true)
                 .on_mention(Some(bot_id))
+                .prefix(massive::DEFAULT_PREFIX)
                 .dynamic_prefix(|_, msg| Box::pin(async move {
-                    if let Some(guild_id) = msg.guild_id {
-                        Some(
-                            massive::get_server(guild_id.into()).prefix
-                        )
-                    } else {
-                        Some(massive::DEFAULT_PREFIX.to_string())
-                    }
+                    Some(
+                        massive::get_server(msg.guild_id.unwrap_or(0.into()).into()).prefix
+                    )
                 }))
                 .no_dm_prefix(true)
                 .owners(owners)
