@@ -2,7 +2,7 @@ mod commands;
 use commands::{
     admin::{say::*, togglegif::*},
     general::{about::*, user::*},
-    moderation::{ban::*, kick::*, settings::*, unban::*},
+    moderation::{ban::*, kick::*, settings::*, unban::*, purge::*},
 };
 
 mod util;
@@ -84,7 +84,7 @@ impl EventHandler for Handler {
 struct General;
 
 #[group]
-#[commands(ban, kick, settings, unban)]
+#[commands(ban, kick, settings, unban, purge)]
 #[owner_privilege(false)]
 #[summary("Moderation utilities")]
 struct Moderation;
