@@ -176,7 +176,7 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
                 .embed(|e| e
                     .title(&format!("Command `{}` failed.", command_name))
                     .colour(0xFF3045)
-                    .description(&format!("{}\n\n**Please refer to the help for this command for more info** (`{}help {}`).", why, massive::DEFAULT_PREFIX, command_name))
+                    .description(&format!("{}\n\n**Please refer to the help for this command for more info** (`help {}`).", why, command_name))
                     .footer(|f| f
                         .text("If you believe this is an error, please contact bigspeed.")
                     )
