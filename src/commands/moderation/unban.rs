@@ -79,35 +79,28 @@ async fn unban(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
                     .await;
 
                 match dm_result {
-                    Ok(_) => {
-                        let _ = msg
-                            .reply(
-                                ctx,
-                                "<a:done:876387797030821899> Successfully unbanned user.",
-                            )
-                            .await;
-                    }
+                    Ok(_) => Ok(()),
                     Err(why) => {
-                        let _ = msg.reply(ctx, "<a:done:876387797030821899> Successfully unbanned user, but was unable to DM them. It's possible that they disabled direct messages.").await;
                         log::error(&format!("Failed to dm user: {}", why));
+                        Ok(())
                     }
                 }
             } else {
-                let _ = msg.reply(ctx, "<a:excl:877661330411229225> Failed to unban user. Do I have the correct permissions?").await;
-                log::error(&format!("Failed to ban user: {:?}", unban_result));
+                Err(From::from(format!(
+                    "Failed to ban user: {:?}",
+                    unban_result
+                )))
             }
         } else {
-            log::error(&format!(
+            Err(From::from(format!(
                 "Couldn't get user info! {:?}",
                 id.to_user(ctx).await
-            ));
+            )))
         }
     } else {
-        log::error(&format!(
+        Err(From::from(format!(
             "Couldn't get guild info! {:?}",
             msg.guild(ctx).await
-        ));
+        )))
     }
-
-    Ok(())
 }

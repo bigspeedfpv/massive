@@ -9,6 +9,8 @@ async fn purge(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     if let Ok(message_count) = args.single::<i32>() {
         Ok(())
     } else {
-        Err(From::from("Unable to parse message count. Are you sure it is a number?"))
+        Err(From::from(
+            "Unable to parse message count. Are you sure it is a number?",
+        ))
     }
 }

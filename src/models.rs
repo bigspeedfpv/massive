@@ -8,7 +8,7 @@ pub struct Server {
 }
 
 #[derive(Insertable)]
-#[table_name="servers"]
+#[table_name = "servers"]
 pub struct NewServer<'a> {
     pub id: i64,
     pub prefix: &'a str,

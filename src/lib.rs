@@ -2,33 +2,31 @@
 extern crate diesel;
 extern crate dotenv;
 
-pub mod schema;
 pub mod models;
+pub mod schema;
 
 mod util;
 use util::log;
 
 pub const DEFAULT_PREFIX: &'static str = "m.";
 
-use diesel::prelude::*;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
 use dotenv::dotenv;
 use std::env;
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url))
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
 }
 
-use self::models::{Server, NewServer};
+use self::models::{NewServer, Server};
 
 pub fn get_server(server_id: i64) -> Server {
-    use schema::servers::dsl::*;
     use schema::servers;
+    use schema::servers::dsl::*;
 
     if server_id == 0 {
         return Server {
@@ -39,8 +37,7 @@ pub fn get_server(server_id: i64) -> Server {
     }
 
     let connection = establish_connection();
-    let server = servers.find(server_id)
-        .first::<Server>(&connection);
+    let server = servers.find(server_id).first::<Server>(&connection);
 
     if let Ok(server) = server {
         server
@@ -59,9 +56,12 @@ pub fn get_server(server_id: i64) -> Server {
             Ok(v) => {
                 log::database(&format!("Server {} not found in db, added.", server_id));
                 return v;
-            },
+            }
             Err(why) => {
-                log::error(&format!("Unable to add {} to databse: {:?}", server_id, why));
+                log::error(&format!(
+                    "Unable to add {} to databse: {:?}",
+                    server_id, why
+                ));
                 panic!();
             }
         }
@@ -76,6 +76,6 @@ pub fn update_server(server: Server) {
         .set((prefix.eq(server.prefix), react.eq(server.react)))
         .get_result::<Server>(&connection)
         .expect(&format!("Unable to find server {}", server.id));
-        
+
     log::database(&format!("Updated server: {:?}", server_to_update));
 }
