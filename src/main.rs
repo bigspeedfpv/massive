@@ -2,7 +2,7 @@ mod commands;
 use commands::{
     admin::{say::*, togglegif::*},
     general::{about::*, user::*},
-    moderation::{ban::*, kick::*, settings::*, unban::*, purge::*},
+    moderation::{ban::*, blacklist::*, kick::*, purge::*, settings::*, unban::*},
 };
 
 mod util;
@@ -84,7 +84,7 @@ impl EventHandler for Handler {
 struct General;
 
 #[group]
-#[commands(ban, kick, settings, unban, purge)]
+#[commands(ban, blacklist, kick, settings, unban, purge)]
 #[owner_privilege(false)]
 #[summary("Moderation utilities")]
 struct Moderation;
@@ -299,11 +299,11 @@ async fn main() {
             c.with_whitespace(true)
                 .on_mention(Some(bot_id))
                 .prefix(massive::DEFAULT_PREFIX)
-                .dynamic_prefix(|_, msg| Box::pin(async move {
-                    Some(
-                        massive::get_server(msg.guild_id.unwrap_or(0.into()).into()).prefix
-                    )
-                }))
+                .dynamic_prefix(|_, msg| {
+                    Box::pin(async move {
+                        Some(massive::get_server(msg.guild_id.unwrap_or(0.into()).into()).prefix)
+                    })
+                })
                 .no_dm_prefix(true)
                 .owners(owners)
         })
