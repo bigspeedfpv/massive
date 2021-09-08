@@ -84,7 +84,7 @@ impl EventHandler for Handler {
 struct General;
 
 #[group]
-#[commands(ban, blacklist, kick, settings, unban, purge)]
+#[commands(ban, blacklist, kick, settings, unban, purge, whitelist)]
 #[owner_privilege(false)]
 #[summary("Moderation utilities")]
 struct Moderation;
